@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"io"
+	"bufio"
 	"os/exec"
 	"strings"
 )
@@ -27,7 +28,14 @@ func main(){
 }
 
 func handleconnection(c net.Conn){
-	runcommand("ls -a ~/go")
+	readbytes := make([]byte, 4096)
+	n,err := bufio.NewReader(c).Read(readbytes)
+	if err != nil || n >= 4096 {
+		//handle error or data too big for a page
+	}
+	fmt.Printf("%q\n", readbytes[:n])
+	//stdout, stderr := runcommand("ls -a ~/go")
+
 	c.Close()
 }
 
