@@ -28,15 +28,25 @@ func main(){
 }
 
 func handleconnection(c net.Conn){
-	readbytes := make([]byte, 4096)
-	n,err := bufio.NewReader(c).Read(readbytes)
-	if err != nil || n >= 4096 {
-		//handle error or data too big for a page
+	defer c.Close()
+	defer fmt.Printf("Closed Connection\n");
+	msg := make([]byte, 4096)
+
+	for c != nil {
+		n, err := bufio.NewReader(c).Read(msg)
+		if err != nil{
+			//End of connection
+			if err.Error() == "EOF" { break }
+			fmt.Printf(err.Error() + "\n")
+		}
+		//something was read
+		if n > 0 {
+			readmsg := msg[:n]
+			fmt.Printf("message: %s\n", readmsg)
+		}
 	}
-	fmt.Printf("%q\n", readbytes[:n])
 	//stdout, stderr := runcommand("ls -a ~/go")
 
-	c.Close()
 }
 
 func runcommand(s string) (stdout io.ReadCloser, errout io.ReadCloser){
