@@ -16,6 +16,7 @@ func main(){
 		return
 	}
 
+
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -36,13 +37,29 @@ func handleconnection(c net.Conn){
 		n, err := bufio.NewReader(c).Read(msg)
 		if err != nil{
 			//End of connection
-			if err.Error() == "EOF" { break }
+			if err == io.EOF { break }
 			fmt.Printf(err.Error() + "\n")
 		}
 		//something was read
 		if n > 0 {
 			readmsg := msg[:n]
-			fmt.Printf("message: %s\n", readmsg)
+			stdout, stderr := runcommand(string(readmsg))
+			n, err := bufio.NewReader(stdout).Read(msg)
+			if err != nil && err == io.EOF{
+				//some error occured, test stderr
+				n, err = bufio.NewReader(stderr).Read(msg)
+				if err != nil {
+					//handle other errors
+				}
+			}
+			if n > 0 {
+				//send to server
+				readmsg = msg[:n]
+				n, err = c.Write(msg[:n])
+				if err != nil {
+					fmt.Printf("Error writing data to client, %d bytes written", n)
+				}
+			}
 		}
 	}
 	//stdout, stderr := runcommand("ls -a ~/go")
@@ -61,6 +78,7 @@ func runcommand(s string) (stdout io.ReadCloser, errout io.ReadCloser){
 		fmt.Print("Error getting standard error pipe for exec")
 	}
 	if err = cmd.Start(); err != nil {
+		//command does not exist
 		fmt.Printf("Error starting command: %s\n", s)
 	}
 	

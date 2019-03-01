@@ -13,6 +13,23 @@ func main(){
 		fmt.Println("Could not connect to server")
 		return
 	}
+
+	writetoserver(conn)
+}
+
+func readfromserver(conn net.Conn){
+	msg := make([]byte, 4098)
+	n, err := bufio.NewReader(conn).Read(msg)
+	if err != nil {
+		fmt.Printf("Error Reading from server\n")
+	}
+
+	if n > 0 {
+		fmt.Printf("%v", string(msg[:n]))
+	}
+}
+
+func writetoserver(conn net.Conn){
 	var isfull bool = true
 	for isfull || conn != nil {
 		msg, isfull, err := bufio.NewReader(os.Stdin).ReadLine()
@@ -24,7 +41,6 @@ func main(){
 		if err != nil || n == 0 {
 			fmt.Printf("Could not write to server\n")
 		}
+		readfromserver(conn)
 	}
-
-	fmt.Println("Connected to server")
 }
