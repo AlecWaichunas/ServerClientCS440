@@ -1,5 +1,12 @@
 package main
 
+/*
+ package main creates a server that will accept client
+ connection. Once a connection is accepted a goroutine
+ is made that will listen to the client for a command,
+ run the command on the server and send a response back.
+*/
+
 import (
 	"fmt"
 	"net"
@@ -9,8 +16,11 @@ import (
 	"strings"
 )
 
+// func main creates a server to listen for clients and
+// accepts them on command. It will then run the func
+// handleconnection
 func main(){
-	ln, err := net.Listen("tcp", ":8080")
+	ln, err := net.Listen("tcp", ":12641")
 	if err != nil {
 		fmt.Println("Error creating server")
 		return
@@ -28,6 +38,11 @@ func main(){
 	}
 }
 
+// handleconnection takes a Conn argument from the package
+// net. It will begin to listen to the client for a message
+// to be read. Once the message is read, it will call func
+// runcommand. Then sends the stdout or stderr messages
+// to the client
 func handleconnection(c net.Conn){
 	defer c.Close()
 	defer fmt.Printf("Closed Connection\n");
@@ -62,10 +77,12 @@ func handleconnection(c net.Conn){
 			}
 		}
 	}
-	//stdout, stderr := runcommand("ls -a ~/go")
-
 }
 
+// func runcommand takes a string as an argument.
+// the string is then fed through the func Command 
+// from the exec package. The stdout and errout is
+// then returned.
 func runcommand(s string) (stdout io.ReadCloser, errout io.ReadCloser){
 	stringcmds := strings.Split(s, " ")
 	cmd := exec.Command(stringcmds[0], stringcmds[1:]...)
