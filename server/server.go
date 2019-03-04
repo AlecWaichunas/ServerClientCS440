@@ -46,9 +46,9 @@ func main(){
 func handleconnection(c net.Conn){
 	defer c.Close()
 	defer fmt.Printf("Closed Connection\n");
-	msg := make([]byte, 4096)
 
 	for c != nil {
+		msg := make([]byte, 4096)
 		n, err := bufio.NewReader(c).Read(msg)
 		if err != nil{
 			//End of connection
@@ -58,22 +58,32 @@ func handleconnection(c net.Conn){
 		//something was read
 		if n > 0 {
 			readmsg := msg[:n]
+			cmderr := false;
 			stdout, stderr := runcommand(string(readmsg))
-			n, err := bufio.NewReader(stdout).Read(msg)
-			if err != nil && err == io.EOF{
-				//some error occured, test stderr
-				n, err = bufio.NewReader(stderr).Read(msg)
-				if err != nil {
-					//handle other errors
+			n := 0;
+			if stdout == nil && stderr == nil {
+				cmderr = true;
+			}else{
+				n, err = bufio.NewReader(stdout).Read(msg)
+				if err != nil && err == io.EOF{
+					//some error occured, test stderr
+					n, err = bufio.NewReader(stderr).Read(msg)
+					if err != nil {
+						fmt.Printf(err.Error())
+						cmderr = true;
+					}
 				}
 			}
-			if n > 0 {
-				//send to server
-				readmsg = msg[:n]
-				n, err = c.Write(msg[:n])
-				if err != nil {
-					fmt.Printf("Error writing data to client, %d bytes written", n)
-				}
+			if cmderr {
+				errmsg := "Could not run command\n"
+				msg = []byte(errmsg)
+				n = len(errmsg)
+			}
+			//send to server
+			readmsg = msg[:n]
+			n, err = c.Write(readmsg)
+			if err != nil {
+				fmt.Printf("Error writing data to client, %d bytes written", n)
 			}
 		}
 	}
@@ -97,6 +107,7 @@ func runcommand(s string) (stdout io.ReadCloser, errout io.ReadCloser){
 	if err = cmd.Start(); err != nil {
 		//command does not exist
 		fmt.Printf("Error starting command: %s\n", s)
+		return nil, nil;
 	}
 	
 	return stdout, errout

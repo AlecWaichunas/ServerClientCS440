@@ -29,15 +29,18 @@ func main(){
 
 // func readfromserver takes a Conn argument from the package
 // net. It reads the message that the server has to send.
-func readfromserver(conn net.Conn){
+func readfromserver(conn net.Conn) (exit bool){
 	msg := make([]byte, 4098)
 	n, err := bufio.NewReader(conn).Read(msg)
 	if err != nil {
 		fmt.Printf("Error Reading from server\n")
+		exit = true;
 	}
 	if n > 0 {
 		fmt.Printf("%v", string(msg[:n]))
+		exit = false;
 	}
+	return exit
 }
 
 // func writetoserver takes a Conn argument from the package
@@ -54,8 +57,11 @@ func writetoserver(conn net.Conn){
 			n, err := conn.Write(msg);
 			if err != nil || n == 0 {
 				fmt.Printf("Could not write to server\n")
+				break;
 			}
-			readfromserver(conn)
+			if readfromserver(conn){
+				break;
+			}
 		}
 	}
 }
