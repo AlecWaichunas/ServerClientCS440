@@ -17,11 +17,15 @@ import (
 )
 // func main connect to given ip address argument and starts 
 // the process to write to the server
-
 func main(){
-	conn ,err := net.Dial("tcp", "localhost:12641")
+	if len(os.Args) == 1 {
+		fmt.Printf("Usage:\n%s [server address]\n", os.Args[0])
+		return;
+	}
+	addr := os.Args[1]
+	conn ,err := net.Dial("tcp", addr + ":12641")
 	if err != nil {
-		fmt.Println("Could not connect to server")
+		fmt.Println("Could not connect to server:", addr)
 		return
 	}
 	writetoserver(conn)
